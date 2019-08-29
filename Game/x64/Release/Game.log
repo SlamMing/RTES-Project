@@ -1,0 +1,20 @@
+﻿  pch.cpp
+  Engine.cpp
+c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(186): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(196): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(223): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(293): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(715): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
+  Game.cpp
+  GameLoop.cpp
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_lock
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_unlock
+Engine.obj : error LNK2001: unresolved external symbol __imp_sem_post
+Engine.obj : error LNK2001: unresolved external symbol __imp_sem_wait
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_attr_init
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_create
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_attr_destroy
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_init
+Engine.obj : error LNK2001: unresolved external symbol __imp_sem_init
+Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_join
+C:\Users\semis\Desktop\materiale didattico\RTES\project\Game\x64\Release\Game.exe : fatal error LNK1120: 10 unresolved externals
