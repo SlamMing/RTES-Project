@@ -22,5 +22,6 @@ constexpr auto nHeight = HEIGHT / CELL_WIDTH;
 constexpr auto OPTIMAL = CELL_WIDTH / 2 - VEHICLE_LENGTH / 2;
 constexpr auto TEMP = 8;
 constexpr auto N = 12;
+constexpr auto e = 2.71828182845904523536;
 
 #endif //PCH_H

@@ -129,11 +129,14 @@ void Neuron::calcOutputGradients(double targetVal) {
 }
 
 double Neuron::transferFunction(double x) {
-	return tanh(x);
+	if (x < 0)
+		return 0;
+	return x;
 }
 double Neuron::transferFunctionDerivative(double x) {
-
-	return 1- x*x;
+	if (x < 0)
+		return 0;
+	return 1;
 }
 void Neuron::feedForward(const Layer &prevLayer) {
 
