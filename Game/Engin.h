@@ -131,7 +131,7 @@ public:
 	Cell();
 	bool isRoad() { return road; };
 	void show();
-	void setRoad() { road = !road; };
+	void setRoad(bool sign) { road = sign; };
 	bool isInside(unsigned x, unsigned y);
 private:
 	unsigned x, y, x1, y1, x2, y2;

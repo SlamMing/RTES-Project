@@ -7,7 +7,8 @@
 
 	HOW TO PLAY:
 	1) drawing phase: using the mouse you can drag and draw a road from the starting
-	point, making a loop as a track ensures the good functioning of the game.
+	point, making a loop as a track ensures the good functioning of the game; 
+	you can press G to save the current track or you can press H and select an existing track file.
 	2) racing phase: after finishing the track you can press ENTER and the race will 
 	start immediately, you can accelerate or decelerate with respectively W and S 
 	while you can turn the car using A for right turn and D for left turn.
@@ -567,15 +568,18 @@ double Sensor::getDistance(double cx, double cy) {
 //################endSensor######################
 
 //******************************utility******************************
-void setCell(double x, double y) {
+void setCell(double x, double y, bool sign = true) {
 	
 	unsigned i = floor(x / CELL_WIDTH);
 	unsigned j = floor(y / CELL_WIDTH);
 	// se è già strada esco
 	if (griglia[i][j].isRoad())
 		return;
-
-	griglia[i][j].setRoad();
+	if (i == 0 || i == WIDTH / CELL_WIDTH - 1)
+		return;
+	if (j == 0 || j == HEIGHT / CELL_WIDTH - 1)
+		return;
+	griglia[i][j].setRoad(sign);
 }
 
 bool	run = false;
@@ -638,6 +642,85 @@ void drawRoad() {
 
 
 //***********************END CELL*********************************
+
+bool exists_file(std::string& name) {
+	if (FILE *file = fopen(name.c_str(), "r")) {
+		fclose(file);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+// Returns an empty string if dialog is canceled
+string openfilename(HWND owner = NULL) {
+	OPENFILENAME ofn;
+	char fileName[MAX_PATH] = "";
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = owner;
+	wchar_t wtext[MAX_PATH];
+	std::mbstowcs(wtext, fileName, MAX_PATH);
+	ofn.lpstrFile = wtext;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+	ofn.lpstrDefExt = L"";
+	string fileNameStr;
+
+	if (GetOpenFileName(&ofn)) {
+		wstring ws(wtext);
+		string str(ws.begin(), ws.end());
+		fileNameStr = str;
+	}
+	return fileNameStr;
+}
+void loadFile() {
+	string fn = openfilename();
+	ifstream is(fn);
+	int cols = WIDTH / CELL_WIDTH,
+		rows = HEIGHT / CELL_WIDTH;
+	for (int i = 0; i < cols; i++) {
+		for (int j = 0; j < rows; j++) {
+			char c;
+			is >> c;
+			if (c == 48) {
+				griglia[i][j].setRoad(false);
+			}else if(c == 49)
+				griglia[i][j].setRoad(true);
+		}
+	}
+}
+void saveFile() {
+
+	//trovo un file name disponibile
+	string base = "pista";
+	string name = "";
+	int i = 0;
+	while (true) {
+		string index = std::to_string(++i);
+		name.clear();
+		name.append(base + index + ".txt");
+		if (!exists_file(name)) {
+			break;
+		}
+	}
+	//salvo il file dividendoli per righe
+	ofstream save_file(name);
+	int cols = WIDTH / CELL_WIDTH,
+		rows = HEIGHT / CELL_WIDTH;
+	for (int i = 0; i < cols; i++) {
+		for (int j = 0; j < rows; j++) {
+			if (griglia[i][j].isRoad()) 
+					save_file << "1";
+			else	save_file << "0";
+			
+			if (j == rows - 1) save_file << endl;
+		}
+	}
+	save_file.close();
+}
+
 
 vector<AICar*>	aicars;
 //state pattern
@@ -772,6 +855,10 @@ void EventManager::checkKeyboard(ALLEGRO_EVENT *e) {
 			keys[2] = false;
 		if (e->keyboard.keycode == ALLEGRO_KEY_D)
 			keys[3] = false;
+		if (e->keyboard.keycode == ALLEGRO_KEY_G)
+			saveFile();
+		if (e->keyboard.keycode == ALLEGRO_KEY_H)
+			loadFile();
 	}
 }
 // controller giocatore
@@ -810,7 +897,6 @@ void EventManager::checkEvents() {
 }
 
 //**************end EventManager*********************
-
 
 
 //************************ENGINE********************************
@@ -860,7 +946,7 @@ Engine::~Engine() {
 	unsigned x = c->x / CELL_WIDTH;
 	unsigned y = c->y / CELL_WIDTH;
 
-	griglia[x][y].setRoad();
+	griglia[x][y].setRoad(true);
 	}
 
 	void Engine::run() {

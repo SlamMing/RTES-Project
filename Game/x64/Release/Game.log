@@ -1,20 +1,12 @@
-﻿  pch.cpp
-  Engine.cpp
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(186): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(196): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(223): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(293): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(715): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
-  Game.cpp
-  GameLoop.cpp
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_lock
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_unlock
-Engine.obj : error LNK2001: unresolved external symbol __imp_sem_post
-Engine.obj : error LNK2001: unresolved external symbol __imp_sem_wait
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_attr_init
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_create
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_attr_destroy
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_mutex_init
-Engine.obj : error LNK2001: unresolved external symbol __imp_sem_init
-Engine.obj : error LNK2001: unresolved external symbol __imp_pthread_join
-C:\Users\semis\Desktop\materiale didattico\RTES\project\Game\x64\Release\Game.exe : fatal error LNK1120: 10 unresolved externals
+﻿  Engine.cpp
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(189): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(199): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(226): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(296): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(800): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
+  Generating code
+  75 of 820 functions ( 9.1%) were compiled, the rest were copied from previous compilation.
+    67 functions were new in current compilation
+    69 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Game.vcxproj -> C:\Users\semis\Documents\GitHub\RTES-Project\x64\Release\Game.exe

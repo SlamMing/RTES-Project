@@ -4,11 +4,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <pthread.h>
 #include <semaphore.h>
+#include <string>
+#include <iostream>
+#include <fstream>
 #include "GameLoop.h"
 #include <allegro5/allegro_primitives.h>
+#include <windows.h>
 constexpr auto MAXSPEED = 5;
-constexpr auto HEIGHT = 900;
-constexpr auto WIDTH = 1600;
+constexpr auto HEIGHT = 960;
+constexpr auto WIDTH = 1760;
 constexpr auto M_PI = 3.1415926535;
 constexpr auto VEHICLE_LENGTH = 20;
 constexpr auto FPS = 60;
