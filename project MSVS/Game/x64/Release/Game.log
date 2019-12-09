@@ -1,0 +1,15 @@
+﻿  pch.cpp
+  Engine.cpp
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(192): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(202): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(229): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(299): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+c:\users\semis\documents\github\rtes-project\game\engine.cpp(803): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
+  Game.cpp
+  GameLoop.cpp
+  Generating code
+  9 of 820 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Game.vcxproj -> C:\Users\semis\Documents\GitHub\RTES-Project\x64\Release\Game.exe
