@@ -1,7 +1,0 @@
-﻿  Engine.cpp
-c:\users\semis\documents\github\rtes-project\game\engine.cpp(189): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\documents\github\rtes-project\game\engine.cpp(199): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\documents\github\rtes-project\game\engine.cpp(226): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\semis\documents\github\rtes-project\game\engine.cpp(296): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-c:\users\semis\documents\github\rtes-project\game\engine.cpp(718): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
-  Game.vcxproj -> C:\Users\semis\Documents\GitHub\RTES-Project\x64\Debug\Game.exe

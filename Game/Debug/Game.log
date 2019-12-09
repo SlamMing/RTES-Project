@@ -1,9 +1,0 @@
-﻿  pch.cpp
-  Engine.cpp
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(269): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(428): warning C4101: 'by': unreferenced local variable
-c:\users\semis\desktop\materiale didattico\rtes\project\game\game\engine.cpp(428): warning C4101: 'bx': unreferenced local variable
-  Game.cpp
-  GameLoop.cpp
-  Generating Code...
-  Game.vcxproj -> C:\Users\semis\Desktop\materiale didattico\RTES\project\Game\Debug\Game.exe
