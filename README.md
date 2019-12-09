@@ -7,7 +7,8 @@ PROGETTO REAL TIME EMBEDDED SYSTEMS #3
 
 	HOW TO PLAY:
 	1) drawing phase: using the mouse you can drag and draw a road from the starting
-	point, making a loop as a track ensures the good functioning of the game.
+	point, making a loop as a track ensures the good functioning of the game; 
+	you can press G to save the current track or you can press H and select an existing track file.
 	2) racing phase: after finishing the track you can press ENTER and the race will 
 	start immediately, you can accelerate or decelerate with respectively W and S 
 	while you can turn the car using A for right turn and D for left turn.
