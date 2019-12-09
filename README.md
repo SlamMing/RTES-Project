@@ -17,6 +17,7 @@ PROGETTO REAL TIME EMBEDDED SYSTEMS #3
 	stuck, they will eventually get over it, usually in under 2 minutes at least one of the cars completes
 	any given track.
 
+# Linux guide
 ## Dependencies
 
 To play this game you will need :
