@@ -14,5 +14,32 @@ PROGETTO REAL TIME EMBEDDED SYSTEMS #3
 	while you can turn the car using A for right turn and D for left turn.
 
 	P.S.: it might take a while for the NN to learn how to drive, do not worry if they look
-	stuck, they will eventually get over it, usually in under 2 minutes one of the cars completes
+	stuck, they will eventually get over it, usually in under 2 minutes at least one of the cars completes
 	any given track.
+
+# Linux guide
+## Dependencies
+
+To play this game you will need :
+- g++ compiler
+- [Allegro 5.1+](https://liballeg.org) GFX library
+- pthreads support by your OS
+
+## How to install Allegro
+Depending on your distro, you have different ways to install Allegro:
+- [Ubuntu with PPAs](https://wiki.allegro.cc/index.php?title=Install_Allegro_from_Ubuntu_PPAs) 
+- [Git](https://wiki.allegro.cc/index.php?title=Install_Allegro5_From_Git/Linux/Debian)
+
+other methods can be find [here](https://wiki.allegro.cc/index.php?title=Getting_Started)
+
+## How to play
+
+First of all you need to compile the game :
+```bash
+$ make clean
+$ make Game
+```
+# Architecture
+- Task Main: periodically reads user inputs and draw all the elements on the screen
+- Task AICar: periodically feeds data from the sensor of each car to the neural network and uses the output to turn the car, it also uses the user's car position to try and avoid it like it would with a wall.
+![](/img/diagram.png)
