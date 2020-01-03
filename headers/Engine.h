@@ -1,5 +1,30 @@
-#pragma once
+#ifndef ENGINE_H
+#define ENGINE_H
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <ext/algorithm>
+
+using namespace std;
 class Neuron;
+typedef vector<Neuron*> Layer;
+class AICar;
+typedef AICar* AICPtr;
+class Sensor;
+typedef Sensor* SensPtr;
+struct Connection
+{
+	double weight;
+	double dWeight;
+};
+
+
 
 struct point {
 	double x, y;
@@ -38,21 +63,17 @@ struct line {
 	}
 
 };
-struct Connection
-{
-	double weight;
-	double dWeight;
-};
 
 constexpr auto dAngle = M_PI / 60;
 constexpr auto dAcc = 0.07;
 class Sensor {
 	double angle_;
 	float lenght;
-	float x, y;
+	float x_, y_;
 public:
-	Sensor(point origin, double angle);
-	void update(point p, double a);
+	Sensor(float x, float y, double angle);
+	Sensor() { return;}
+	void update(float x, float y, double a);
 	double getDistance(double, double);
 
 };
@@ -71,6 +92,7 @@ class Car
 public:
 	float* pts;
 	Car(float, float);
+	Car(){ return; }
 	~Car();
 	void tick();
 	void show();
@@ -117,7 +139,7 @@ public:
 
 class Engine
 {
-
+	
 public:
 	Engine();
 	~Engine();
@@ -137,3 +159,4 @@ private:
 	unsigned x, y, x1, y1, x2, y2;
 	bool road;
 };
+#endif

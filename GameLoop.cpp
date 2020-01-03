@@ -1,5 +1,5 @@
 #include "pch.h"
-
+#include "GameLoop.h"
 //global access to gameloop
 bool GameLoop::running = true;
 void GameLoop::setRunning(bool b) {

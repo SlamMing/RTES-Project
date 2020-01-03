@@ -1,25 +1,25 @@
 CC=g++
 
 
-CFLAGS=-c -Iheaders -std=gnu++11
+CFLAGS= -Iheaders -std=gnu++11 -Wall
 LDFLAGS= `pkg-config --cflags --libs allegro-5 allegro_primitives-5` -lallegro -lrt -lm -lpthread
-all: Game
+all: Engine
 
-Game: pch.o Game.o GameLoop.o Engine.o
-	$(CC) pch.o GameLoop.o Game.o Engine.o -o Game  $(LDFLAGS) 
+#Engine: pch.o GameLoop.o Engine.o
+#	$(CC) pch.o GameLoop.o Engine.o -o Engine  $(LDFLAGS) 
 
-pch.o: pch.cpp
-	$(CC) $(CFLAGS) pch.cpp
+Engine: pch.cpp GameLoop.cpp Engine.cpp
+	$(CC) $(CFLAGS) pch.cpp GameLoop.cpp Engine.cpp -o Engine  $(LDFLAGS) 
 
-Game.o: Game.cpp
-	$(CC) $(CFLAGS) Game.cpp
+#pch.o: pch.cpp
+#	$(CC) $(CFLAGS) pch.cpp
 
-GameLoop.o: GameLoop.cpp
-	$(CC) $(CFLAGS) GameLoop.cpp
+#GameLoop.o: GameLoop.cpp
+#	$(CC) $(CFLAGS) GameLoop.cpp
 
-Engine.o: Engine.cpp
-	$(CC) $(CFLAGS) Engine.cpp
+#Engine.o: Engine.cpp
+#	$(CC) $(CFLAGS) Engine.cpp
 
 clean:
-	rm -rf *o Game
+	rm -rf *o Engine
 

@@ -17,20 +17,24 @@
 	stuck, they will eventually get over it, usually in under 2 minutes one of the cars completes
 	any given track.
 */
+#include "GameLoop.h"
 #include "pch.h"
-#include <iostream>
 #include "Engine.h"
-#include <cmath>
-#include <vector>
-#include <ext/algorithm>
+#include <memory>
+#include <utility>
+
 using namespace std;
+ 
 
 
+int lastLoopTime = clock();
 
 ALLEGRO_DISPLAY		*display;
 EventManager		*em;
 ALLEGRO_EVENT_QUEUE *queue;
 Car					*c;
+//AICPtr 					*aicars;
+//vector<unique_ptr<AICar>> aicars;
 struct gestore_t {
 	pthread_t		cars[N];
 	//mutex privato per accedere alle risorse di una AICar
@@ -39,14 +43,11 @@ struct gestore_t {
 	sem_t			acPriv[N];
 	//mutex per accedere alle risorse del giocatore
 	pthread_mutex_t carMutex;
-} gestore;
-
+};
+gestore_t *gestore;
 
 Cell griglia[WIDTH / CELL_WIDTH][HEIGHT / CELL_WIDTH];
-
-
-typedef vector<Neuron> Layer;
-
+//neuron class
 class Neuron {
 public:
 	Neuron(unsigned nOutputs, unsigned index);
@@ -56,7 +57,6 @@ public:
 	void calcOutputGradients(double targetVal);
 	void calcHiddenGradients(const Layer &nextLayer);
 	void updateInputWeights(Layer &prevLayer);
-private:
 	static double eta;
 	static double alpha;
 	static double randomWeight(void) { return rand() / double(RAND_MAX); }
@@ -65,19 +65,20 @@ private:
 	double sumDOW(const Layer &nextLayer) const;
 	double output, gradient;
 	unsigned mIndex;
-	vector<Connection> outputWeights;
+	vector<Connection*> outputWeights;
 
 };
 
 
+//net class
 class Net {
 public:
 	Net(const vector<unsigned> &topology);
+	Net(){ return; }
 	void feedForward(const vector<double> &inputs);
 	void backProp(const vector<double> &targets);
 	void getResults(vector<double> &result) const;
-private:
-	vector<Layer> lays;
+	vector<Layer*> lays;
 	double error;
 	double recentAverageError;
 	double recentAverageSmoothingFactor;
@@ -86,8 +87,8 @@ private:
 //****************end decl***********************
 
 
-double Neuron::eta = 0.15;
-double Neuron::alpha = 0.5;
+double Neuron::eta = 0.1;
+double Neuron::alpha = 0.3;
 
 //**************************end decl**************************
 
@@ -96,16 +97,16 @@ void Neuron::updateInputWeights(Layer &prevLayer) {
 	//del layer precedente
 
 	for (unsigned n = 0; n < prevLayer.size(); n++) {
-		Neuron &neuron = prevLayer[n];
-		double oldDeltaWeight = neuron.outputWeights[mIndex].dWeight;
+		Neuron &neuron = *prevLayer[n];
+		double oldDeltaWeight = neuron.outputWeights[mIndex]->dWeight;
 		double newDeltaWeight =
 			eta //learning rate
 			* neuron.getOutput()
 			* gradient
 			+ alpha
 			* oldDeltaWeight;
-		neuron.outputWeights[mIndex].dWeight = newDeltaWeight;
-		neuron.outputWeights[mIndex].weight += newDeltaWeight;
+		neuron.outputWeights[mIndex]->dWeight = newDeltaWeight;
+		neuron.outputWeights[mIndex]->weight += newDeltaWeight;
 
 	}
 
@@ -114,7 +115,7 @@ double Neuron::sumDOW(const Layer &nextLayer) const {
 	double sum = 0.0;
 
 	for (unsigned n = 0; n < nextLayer.size() - 1; n++) {
-		sum += outputWeights[n].weight * nextLayer[n].gradient;
+		sum += outputWeights[n]->weight * nextLayer[n]->gradient;
 	}
 	return sum;
 }
@@ -143,7 +144,7 @@ void Neuron::feedForward(const Layer &prevLayer) {
 	double sum = 0.0;
 
 	for (unsigned n = 0; n < prevLayer.size(); n++) {
-		sum += prevLayer[n].getOutput() * prevLayer[n].outputWeights[mIndex].weight;
+		sum += prevLayer[n]->getOutput() * prevLayer[n]->outputWeights[mIndex]->weight;
 	}
 	
 	output = transferFunction(sum);
@@ -151,8 +152,8 @@ void Neuron::feedForward(const Layer &prevLayer) {
 Neuron::Neuron(unsigned nOutputs, unsigned index) {
 	mIndex = index;
 	for (unsigned c = 0; c < nOutputs; c++) {
-		outputWeights.push_back(Connection());
-		outputWeights.back().weight = randomWeight();
+		outputWeights.push_back(new Connection());
+		outputWeights.back()->weight = randomWeight();
 	}
 
 }
@@ -161,17 +162,17 @@ Neuron::Neuron(unsigned nOutputs, unsigned index) {
 void Net::getResults(vector<double> &result) const {
 	result.clear();
 
-	for (unsigned n = 0; n < lays.back().size() - 1; n++) {
-		result.push_back(lays.back()[n].getOutput());
+	for (unsigned n = 0; n < lays.back()->size() - 1; n++) {
+		result.push_back((*lays.back())[n]->getOutput());
 	}
 }
 void Net::backProp(const vector<double> &targets) {
 	//calcola root mean square error
-	Layer &outputLayer = lays.back();
+	Layer &outputLayer = *lays.back();
 	error = 0.0;
 
 	for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
-		double delta = targets[n] - outputLayer[n].getOutput();
+		double delta = targets[n] - outputLayer[n]->getOutput();
 		error += delta * delta;
 	}
 	error /= outputLayer.size() - 1;
@@ -183,25 +184,25 @@ void Net::backProp(const vector<double> &targets) {
 		/ (recentAverageSmoothingFactor + 1.0);
 	//calcola gradiente del layer output 
 	for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
-		outputLayer[n].calcOutputGradients(targets[n]);
+		outputLayer[n]->calcOutputGradients(targets[n]);
 	}
 	//calcola gradiente dei hidden layers
 	for (unsigned nLayer = lays.size() - 2; nLayer > 0; --nLayer) {
-		Layer &hiddenLayer = lays[nLayer];
-		Layer &nextLayer = lays[nLayer + 1];
+		Layer &hiddenLayer = *lays[nLayer];
+		Layer &nextLayer = *lays[nLayer + 1];
 
 		for (unsigned n = 0; n < hiddenLayer.size(); ++n) {
-			hiddenLayer[n].calcHiddenGradients(nextLayer);
+			hiddenLayer[n]->calcHiddenGradients(nextLayer);
 		}
 	}
 	//per tutti i layer da output al primo hidden
 	//update di tutti i pesi
 	for (unsigned nLayer = lays.size() - 1; nLayer > 0; --nLayer) {
-		Layer &l = lays[nLayer];
-		Layer &prevLayer = lays[nLayer - 1];
+		Layer &l = *lays[nLayer];
+		Layer &prevLayer = *lays[nLayer - 1];
 
 		for (unsigned n = 0; n < l.size() - 1; n++) {
-			l[n].updateInputWeights(prevLayer);
+			l[n]->updateInputWeights(prevLayer);
 		}
 	}
 }
@@ -209,14 +210,14 @@ void Net::feedForward(const vector<double> &inputs) {
 
 	//set input to input neurons
 	for (unsigned i = 0; i < inputs.size(); i++) {
-		lays[0][i].setOutput(inputs[i]);
+		(*lays[0])[i]->setOutput(inputs[i]);
 	}
 
 	//propaga
 	for (unsigned nLayer = 1; nLayer < lays.size(); ++nLayer) {
-		Layer &prevLayer = lays[nLayer - 1];
-		for (unsigned n = 0; n < lays[nLayer].size() - 1; n++) {
-			lays[nLayer][n].feedForward(prevLayer);
+		Layer &prevLayer = *lays[nLayer - 1];
+		for (unsigned n = 0; n < lays[nLayer]->size() - 1; n++) {
+			(*lays[nLayer])[n]->feedForward(prevLayer);
 		}
 
 	}
@@ -226,20 +227,25 @@ Net::Net(const vector<unsigned> &topology) {
 	unsigned nLayers = topology.size();
 	//creazione layers
 	for (unsigned layerNum = 0; layerNum < nLayers; ++layerNum) {
-		lays.push_back(Layer());
+		lays.push_back(new Layer());
 		unsigned nOutputs = layerNum == topology.size() - 1 ? 0 : topology[layerNum + 1];
 
 		//aggiungo neuroni al layer
 		for (unsigned neuronNum = 0; neuronNum <= topology[layerNum]; ++neuronNum) {
-			lays.back().push_back(Neuron(nOutputs, neuronNum));
+			lays.back()->push_back(new Neuron(nOutputs, neuronNum));
 		}
-		lays.back().back().setOutput(1.0);
+		lays.back()->back()->setOutput(1.0);
 	}
 	//setto i bias
 	
 	
 }
 
+
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 //#####################CAR#######################
 
 Car::Car(float px, float py)
@@ -273,7 +279,6 @@ void Car::tick() {
 	updatePts();
 }
 void Car::show() {
-	ALLEGRO_COLOR black = al_map_rgb(42, 165, 232);
 	
 	al_draw_filled_polygon(pts, 4, color);
 }
@@ -339,46 +344,60 @@ double Car::getAngle() {
 //#############endCar###########################
 
 class AICar : public Car {
-	std::vector<Sensor*> sensori;
-	std::vector<double> inputs;
-	Net* net;
+
+
 public:
 	void step(int index);
 	void die();
 	AICar(float, float);
-
+	AICar() { Car(); return; }
+	void initNet();
+	void initSensor();
+	Sensor **sensori;
+	double ins[5];
+	Net *net;
+	
 };
 
 //#############AICAR ############################
 
 AICar::AICar(float x, float y) : Car(x, y) {
+
+	vel = MAXSPEED;
+
+	
+}
+void AICar::initSensor(){
 	//-------------------------------------------------
 	//inizializzo sensori di prossimità a certi angoli
 	//questi mi daranno gli input per la rete neurale
 	//-------------------------------------------------
+	int j = 0;
+	sensori = new SensPtr[5];
 	for (double i = M_PI / 2; i >= -M_PI / 2; i -= M_PI / 4) {
-		point t(x, y);
-		Sensor *s = new Sensor(t, i);
-		sensori.push_back(s);
+		sensori[j] = new Sensor(x, y, i);
+		ins[j] = 0;
+		j++;
 	}
-	vel = MAXSPEED;
+}
+void AICar::initNet(){
 
 	//rete neurale 5(input) -> 3 (hidden) -> 2 (output)
 	std::vector<unsigned> topology;
 	topology.push_back(5);
 	topology.push_back(3);
 	topology.push_back(2);
-	net = new Net(topology);
+	this->net = new Net(topology);
 }
-
 
 void AICar::step(int index) {
 //ricevi input dai sensori
-	inputs.clear();
-	for (Sensor * s : sensori) {
-		point t(x, y);
-		s->update(t, getAngle());
-		inputs.push_back(s->getDistance(x, y)/SENSOR_RANGE);
+	vector<double> inputs;
+	for (int i = 0; i < 5; i ++) {
+		sensori[i]->update(x, y, getAngle());
+		ins[i] = sensori[i]->getDistance(x, y)/SENSOR_RANGE;
+		inputs.push_back(ins[i]);
+
 	}
 //feeda gli input alla rete
 	net->feedForward(inputs);
@@ -391,9 +410,9 @@ void AICar::step(int index) {
 	angle += ((res[0] > res[1]) ? res[0] : -res[1])*M_PI / 30;
 
 //assicuro mutua esclusione su mutex privato per muovere la macchina 
-	pthread_mutex_lock(&gestore.acMutex[index]);
+	pthread_mutex_lock(&gestore->acMutex[index]);
 	move();
-	pthread_mutex_unlock(&gestore.acMutex[index]);
+	pthread_mutex_unlock(&gestore->acMutex[index]);
 
 	updatePts();
 	
@@ -405,8 +424,8 @@ void AICar::die() {
 	y = spawnY;
 	angle = 0;
 	vector<double> targets;
-	double sx = (inputs[0] + inputs[1])/2;
-	double dx = (inputs[3] + inputs[4])/2;
+	double sx = (ins[0] + ins[1])/2;
+	double dx = (ins[3] + ins[4])/2;
 //training
 	targets.push_back(sx);
 	targets.push_back(dx);
@@ -438,11 +457,11 @@ point intersezione(point a, point b, point c, point d) {
 
 }
 //#################Sensor##########################
-Sensor::Sensor(point origin, double angle) : angle_(angle), lenght(SENSOR_RANGE) {}
+Sensor::Sensor(float x, float y, double angle) : angle_(angle), lenght(SENSOR_RANGE), x_(x), y_(y) {}
 //ruota il sensore del suo angolo più quello della macchina
-void Sensor::update(point p, double a) {
-	x = p.x + cos(angle_ + a)*lenght;
-	y = p.y + sin(angle_ + a)*lenght;
+void Sensor::update(float x, float y, double a) {
+	x_ = x + cos(angle_ + a)*lenght;
+	y_ = y + sin(angle_ + a)*lenght;
 }
 
 double Sensor::getDistance(double cx, double cy) {
@@ -450,7 +469,7 @@ double Sensor::getDistance(double cx, double cy) {
 	unsigned cj = floor(cy / CELL_WIDTH);
 	double distance = lenght;
 	point car(cx, cy);
-	point sens(x, y);
+	point sens(x_, y_);
 	point intersection(0, 0);
 //-------------------------------------------------------------
 // per ogni cella faccio raycasting del sensore su tutte le pareti
@@ -521,7 +540,7 @@ double Sensor::getDistance(double cx, double cy) {
 //così imparano a schivare il giocatore
 //mutua esclusione per evitare conflitti
 //----------------------------------------------------
-	pthread_mutex_lock(&gestore.carMutex);
+	pthread_mutex_lock(&gestore->carMutex);
 	float * points = c->getPts();
 	point p1(points[0], points[1]);
 	point p2(points[2], points[3]);
@@ -559,7 +578,7 @@ double Sensor::getDistance(double cx, double cy) {
 			intersection = ix;
 		}
 	}
-	pthread_mutex_unlock(&gestore.carMutex);
+	pthread_mutex_unlock(&gestore->carMutex);
 	
 	return distance;
 }
@@ -581,9 +600,9 @@ void setCell(double x, double y, bool sign = true) {
 	griglia[i][j].setRoad(sign);
 }
 
-bool	run = false;
+bool	runs = false;
 bool isRunning() {
-	return run;
+	return runs;
 }
 //******************************end utility******************************
 
@@ -682,11 +701,16 @@ string openfilename(){
   FILE *f = popen("zenity --file-selection", "r");
   fgets(filename, 1024, f);
   string fn(filename);
+	pclose(f);
+ fn.pop_back();
   return fn;
 }
 void loadFile() {
 	string fn = openfilename();
-	ifstream is(fn);
+	ifstream is(fn.c_str());
+	
+	if(!is)
+	std::cout << "Error while loading file" << endl;
 	int cols = WIDTH / CELL_WIDTH,
 		rows = HEIGHT / CELL_WIDTH;
 	for (int i = 0; i < cols; i++) {
@@ -698,6 +722,16 @@ void loadFile() {
 			}else if(c == 49)
 				griglia[i][j].setRoad(true);
 		}
+	}
+	for (int j = 0; j < rows; j++) {
+		for (int i = 0; i < cols; i++) {
+		
+			if(griglia[i][j].isRoad())
+				std::cout << "1";
+			else
+				std::cout << "0";
+	}
+				std::cout << '\n';
 	}
 }
 
@@ -719,6 +753,8 @@ void saveFile() {
 	}
 	//salvo il file dividendoli per righe
 	ofstream save_file(name);
+	if(!save_file)
+		std::cout << "file non salvato";
 	int cols = WIDTH / CELL_WIDTH,
 		rows = HEIGHT / CELL_WIDTH;
 	for (int i = 0; i < cols; i++) {
@@ -733,8 +769,8 @@ void saveFile() {
 	save_file.close();
 }
 
+AICar **aicars;
 
-vector<AICar*>	aicars;
 //state pattern
 class state {
 public :
@@ -754,26 +790,28 @@ class drawState : public state {
 //stato dove si gareggia contro l'IA
 class runState : public state {
 	void tick() {
+		AICar *temp;
 		checkCollisions();
 		al_clear_to_color(al_map_rgb(45, 255, 116));
 		drawRoad();
 
 		//mutua esclusione per muovere la macchina del giocatore
-		pthread_mutex_lock(&gestore.carMutex);
+		pthread_mutex_lock(&gestore->carMutex);
 		c->tick();
 		c->show();
-		pthread_mutex_unlock(&gestore.carMutex);
+		pthread_mutex_unlock(&gestore->carMutex);
 		for (int i = 0; i < N; i++) {
+			temp = aicars[i];
 			//mutua esclusione per disegnare le macchine AI senza che esse vengano mosse dai thread
-			pthread_mutex_lock(&gestore.acMutex[i]);
-			aicars[i]->show();
-			pthread_mutex_unlock(&gestore.acMutex[i]);
+			pthread_mutex_lock(&gestore->acMutex[i]);
+			temp->show();
+			pthread_mutex_unlock(&gestore->acMutex[i]);
 
 		}
 		for (int i = 0; i < N; i++) {
 			//semaforo di sincronizzazione,
 			//altrimenti i thread possono andare più veloce del thread principale (più di 60 fps)
-			sem_post(&gestore.acPriv[i]);
+			sem_post(&gestore->acPriv[i]);
 			}
 		al_flip_display();
 
@@ -788,12 +826,15 @@ void setState(state *s) {
 	currentState = s;
 }
 
+int tid[N];
 
 
 void* thread(void* arg) {
+	AICPtr mCar;
+	int index = *(int *) arg;
+	mCar = aicars[index];
+
 	
-	int index = (intptr_t) arg;
-	AICar* mCar = aicars[index];
 	while (true) {
 		//do gli input alla rete neurale che mi dice verso che direzione muovermi
 		mCar->step(index);
@@ -801,7 +842,7 @@ void* thread(void* arg) {
 		if (isColliding(mCar->getPts()))
 			mCar->die();
 		//sincronizzazione 
-		sem_wait(&gestore.acPriv[index]);
+		sem_wait(&gestore->acPriv[index]);
 		
 	}
 }
@@ -809,8 +850,8 @@ void startCars(gestore_t *g) {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	for (int i = 0; i < N; i++) {
-		aicars.push_back(new AICar(spawnX, spawnY));
-		pthread_create(&g->cars[i], &attrs, thread, (void*) &i);
+		tid[i] = i;
+		pthread_create(&g->cars[i], &attrs, thread, (void*) &tid[i]);
 	}
 	pthread_attr_destroy(&attrs);
 }
@@ -851,11 +892,13 @@ void EventManager::checkKeyboard(ALLEGRO_EVENT *e) {
 			keys[2] = true;
 		if (e->keyboard.keycode == ALLEGRO_KEY_D)
 			keys[3] = true;
-		if (e->keyboard.keycode == ALLEGRO_KEY_ENTER && !isRunning()) {
-			run = true;
+		if (!isRunning() && e->keyboard.keycode == ALLEGRO_KEY_ENTER) {			
+			
+			runs = true;
 			setState(running);
 			//fai partire i thread
-			startCars(&gestore); 
+			
+			startCars(gestore); 
 		}
 	}
 	if (e->type == ALLEGRO_EVENT_KEY_UP) {
@@ -918,10 +961,22 @@ Engine::Engine(){
 	queue = al_create_event_queue();
 	display = al_create_display(WIDTH, HEIGHT);
 	al_init_primitives_addon();
-
+	gestore = new gestore_t;
 	em = new EventManager(display, queue);
+	aicars = new AICPtr[N];
 	//macchina giocatore
 	c =	new Car(spawnX, spawnY);
+	//macchine AI
+	for (int i = 0; i < N; i++) {
+	
+	/*aicars.push_back(make_unique<AICar>(spawnX, spawnY));
+	aicars.back().get()->initSensor();
+	aicars.back().get()->initNet();
+	*/	
+	aicars[i] = new AICar(spawnX, spawnY);
+	aicars[i]->initSensor();
+	aicars[i]->initNet();
+	}
 	//state pattern
 	currentState = new state();
 	running = new runState();
@@ -932,10 +987,10 @@ Engine::Engine(){
 	srand(time(NULL));
 
 	//inizializzazione mutex e semafori
-	pthread_mutex_init(&gestore.carMutex, NULL);
+	pthread_mutex_init(&gestore->carMutex, NULL);
 	for (int i = 0; i < N; i++) {
-		pthread_mutex_init(&gestore.acMutex[i], NULL);
-		sem_init(&gestore.acPriv[i], 0, 0);
+		pthread_mutex_init(&gestore->acMutex[i], NULL);
+		sem_init(&gestore->acPriv[i], 0, 0);
 	}
 
 }
@@ -945,7 +1000,7 @@ Engine::Engine(){
 Engine::~Engine() {
 	al_destroy_display(display);
 	for (int i = 0; i < N; i++) {
-		pthread_join(gestore.cars[i], NULL);
+		pthread_join(gestore->cars[i], NULL);
 	}
 }
 
@@ -958,6 +1013,7 @@ Engine::~Engine() {
 	unsigned x = c->x / CELL_WIDTH;
 	unsigned y = c->y / CELL_WIDTH;
 
+
 	griglia[x][y].setRoad(true);
 	}
 
@@ -968,4 +1024,23 @@ Engine::~Engine() {
 	}
 	
 
+int main()
+{	
+	Engine *e;
+	e = new Engine;
+	e->init();
+	
+	while (GameLoop::isRunning()) {
+		int now = clock();
+		
+		if (now - lastLoopTime >= OPTIMAL_TIME) {
+	
+			float fps = 1000000 / (now - lastLoopTime);
+			cout << fps << endl;
+			lastLoopTime = now;
 
+			e->run();
+		}
+	}
+	
+}
